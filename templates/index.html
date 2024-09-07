@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Chatbot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #chatbox { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #drive_link, #question { width: 70%; padding: 5px; margin-bottom: 10px; }
+        #load_data, #submit { padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>Google Drive Chatbot</h1>
+    <input type="text" id="drive_link" placeholder="Enter Google Drive folder or Sheet link">
+    <button id="load_data">Load Data</button>
+    <div id="chatbox"></div>
+    <input type="text" id="question" placeholder="Ask a question about the data">
+    <button id="submit">Ask</button>
+
+    <script>
+        $(document).ready(function() {
+            $('#load_data').click(function() {
+                var drive_link = $('#drive_link').val();
+                if (drive_link) {
+                    $.ajax({
+                        url: '/load_data',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({drive_link: drive_link}),
+                        success: function(response) {
+                            if (response.error) {
+                                $('#chatbox').append('<p><strong>Error:</strong> ' + response.error + '</p>');
+                            } else {
+                                $('#chatbox').append('<p><strong>System:</strong> ' + response.message + '</p>');
+                            }
+                            $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+                        }
+                    });
+                }
+            });
+
+            $('#submit').click(function() {
+                var question = $('#question').val();
+                var drive_link = $('#drive_link').val();
+                if (question && drive_link) {
+                    $('#chatbox').append('<p><strong>You:</strong> ' + question + '</p>');
+                    $.ajax({
+                        url: '/ask',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({question: question, drive_link: drive_link}),
+                        success: function(response) {
+                            if (response.error) {
+                                $('#chatbox').append('<p><strong>Error:</strong> ' + response.error + '</p>');
+                            } else {
+                                $('#chatbox').append('<p><strong>Chatbot:</strong> ' + response.answer + '</p>');
+                            }
+                            $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+                        }
+                    });
+                    $('#question').val('');
+                }
+            });
+
+            $('#question').keypress(function(e) {
+                if (e.which == 13) {  // Enter key
+                    $('#submit').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
